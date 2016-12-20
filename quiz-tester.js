@@ -60,10 +60,10 @@ console.log('==================================')
 console.log(testsRun + ' TESTS RUN')
 if (testsPassed > 0) console.log('%c>' + testsPassed + ' TESTS PASSED', 'color: green')
 if (testsFailed > 0) console.log('%c>' + testsFailed + ' TESTS FAILED', 'color: red')
-// restart the game so it can run normally
+  // restart the game so it can run normally
 restart()
 
-function simulateGame (testTitle, winner) {
+function simulateGame(testTitle, winner) {
   console.log('-------------------------------')
   console.log('Testing: ' + testTitle)
   console.log('-------------------------------')
@@ -120,16 +120,18 @@ function simulateGame (testTitle, winner) {
   expect('whoWon should return ' + winner + ' at end of the game', whoWon(), winner)
 }
 
-function expect (expectationMessage, testFunctionResult, returnValue, operator) {
+function expect(expectationMessage, testFunctionResult, returnValue, operator) {
   ++testsRun
 
   var passed = false
 
   if (operator && operator !== '===') {
     switch (operator) {
-      case '>' : passed = (testFunctionResult > returnValue)
+      case '>':
+        passed = (testFunctionResult > returnValue)
         break
-      case '>=' : passed = (testFunctionResult >= returnValue)
+      case '>=':
+        passed = (testFunctionResult >= returnValue)
     }
   } else {
     passed = (testFunctionResult === returnValue)

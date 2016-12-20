@@ -1,116 +1,149 @@
-/* global $ */
-/* exports isGameOver, whoWon, playTurn, restart, currentQuestion, correctAnswer, numberOfAnswers */
+var questionInputsArray =
+  [
+    ["What is one plus one?", "3", "five", "six", "two"],
+    ["What is five times six?", "2", "31", "30"],
+    ["Who am I?", "3", "Jackie Chan", "The browser", "Who knows?"],
+    ["What is eight minus two?", "1", "6", "ninja", "Thomas Edison", "don't trust the system"]
+  ]
 
-// A constructor function allows us to easily make question objects
-function Question (prompt, answers, correctAnswerIndex) {
-  this.prompt = prompt
-  this.choices = answers
-  this.correctChoice = correctAnswerIndex
+var questionsArray = []
+
+var questionNow = 0 // 0 means question 1, etc
+var currentPlayer = 1 // player 1 or 2
+var playerScore = [0, 0] // playerScore[0] is player 1, playerScore[1] is player 2
+
+function Question(question, correctAnswer, answersArray) {
+  // Question constructor
+  // any number of answers is acceptable
+  this.question = question //string
+  this.correctAnswer = correctAnswer //zero-based index for correct answer in answersArray
+  this.answersArray = answersArray
+  this.numberOfAnswers = answersArray.length
 }
 
-// using the new keyword and the constructor we can create questions for the quiz
-var question1 = new Question('the question', ['answer a', 'answer b', 'answer c', 'answer d'], 0)
+//MAIN CODE BODY:
+setupQuestionsArray()
+restart()
+$(".start").on("click", function() {
+  $(".start").addClass("hidden")
+  $(".buttonBox").removeClass("hidden")
+  drawQuestion()
+})
 
-// we can create an object to represent all of the settings and scores for the quiz
-var quiz = {
-  currentQuestion: 0,
-  questions: [question1, question1, question1, question1],
-  isGameOver: false,
-  player1Points: 0,
-  player2Points: 0
+function setupQuestionsArray() {
+  var answersArray
+  questionInputsArray.forEach(function(dataLine, idx, arr) {
+    answersArray = []
+    for (i = 2; i < dataLine.length; i++) {
+      if (typeof dataLine[i] != "undefined") answersArray[i - 2] = dataLine[i]
+    }
+    questionsArray[idx] = new Question(dataLine[0], dataLine[1], answersArray)
+
+  })
 }
 
-// numberOfQuestions should return an integer that is the number of questions in a game
-function numberOfQuestions () {
-  return quiz.questions.length
+function restart() {
+  questionNow = 0
+  currentPlayer = 1 // 1 is player 1 
+  playerScore = [0, 0]
 }
 
-// currentQuestion should return an integer that is the zero-based index of the current question in the quiz
-function currentQuestion () {
-  return quiz.currentQuestion
+function drawQuestion() {
+  //display question
+  var questionText = questionsArray[questionNow].question
+  var questionNumberText = questionNow + 1
+  $(".questionNo").text("question " + questionNumberText)
+  $(".playerNo").text("This question is for player " + currentPlayer)
+  $(".questionText").text(questionText)
+  $(".buttonBox").empty()
+  questionsArray[questionNow].answersArray.forEach(function(ele, idx, array) {
+    $(".buttonBox").append("<button class = 'answer'>" + ele + "</button>")
+    $(".buttonBox button").last().on("click", function() {
+      var x = (playTurn(idx+1))
+    })
+  })
+
 }
 
-// correctAnswer should return an integer that is the zero-based index the correct answer for the currrent question
-function correctAnswer () {
-  return quiz.questions[quiz.currentQuestion].correctChoice
-}
-
-// numberOfAnswers should return an integer that is the number of choices for the current question
-function numberOfAnswers () {
-  return quiz.questions[quiz.currentQuestion].choices.length
-}
-
-// playTurn should take a single integer, which specifies which choice the current player wants to make. It should return a boolean true/false if the answer is correct.
-function playTurn (choice) {
-  if (quiz.isGameOver) {
+function playTurn(choice) {
+  console.log("choice", choice, "played")
+  console.log("current player is " + currentPlayer)
+  
+  if (isGameOver()) { // because test definition of isGameOver is different from program
+    gameEnd()
     return false
   }
-  var correct = false
-  if (choice === quiz.questions[quiz.currentQuestion].correctChoice) {
-    correct = true
-    if (quiz.currentQuestion % 2) {
-      quiz.player2Points++
-    } else {
-      quiz.player1Points++
-    }
+  var result = false
+  console.log("current question is " + questionNow)
+  console.log("current correct answer is " + questionsArray[questionNow].correctAnswer)
+  if (questionsArray[questionNow].correctAnswer === choice.toString()) {
+    console.log("correct answer detected")
+    result = true
+    playerScore[currentPlayer - 1]++
   }
-  ++quiz.currentQuestion
-  if (quiz.currentQuestion === numberOfQuestions()) { 
-    quiz.isGameOver = true
-  }
-  return correct
-}
-
-// isGameOver should return a true or false if the quiz is over.
-function isGameOver () {
-  return quiz.isGameOver
-}
-
-// whoWon should return 0 if the game is not yet finished, 1 or 2 depending on which player won, else 3 if the game is a draw.
-function whoWon () {
-  if (!quiz.isGameOver) return 0
-  if (quiz.player1Points > quiz.player2Points) return 1
-  if (quiz.player1Points < quiz.player2Points) return 2
-  return 3
-}
-
-// restart should restart the game so it can be played again.
-function restart () {
-  quiz.currentQuestion = 0
-  quiz.isGameOver = false
-  quiz.player1Points = 0
-  quiz.player2Points = 0
-}
-
-// a function to update the display whenever the data changes
-function updateDisplay () {
+  questionNow++
+  console.log("question number after increment is", questionNow)
+  console.log("current score is " + playerScore[0],playerScore[1])
+  currentPlayer =
+    currentPlayer === 1 ? 2 : 1
   if (isGameOver()) {
-    $('h1').text(' gameover. winner is ' + whoWon())
-  } else {
-    $('h1').text(quiz.currentQuestion + ') ' + quiz.questions[quiz.currentQuestion].prompt)
-    // hard coded display, only has 4 answers at a time. Each is displayed as a button, so can use the order (eg) that they appear in the dom to select them
-    $('button').eq(0).text(quiz.questions[quiz.currentQuestion].choices[0])
-    $('button').eq(1).text(quiz.questions[quiz.currentQuestion].choices[1])
-    $('button').eq(2).text(quiz.questions[quiz.currentQuestion].choices[2])
-    $('button').eq(3).text(quiz.questions[quiz.currentQuestion].choices[3])
+    gameEnd()
+    return false
   }
-  // update player scores regardless
-  $('h3').eq(0).text('Player1: ' + quiz.player1Points)
-  $('h3').eq(1).text('Player2: ' + quiz.player2Points)
+  drawQuestion()
+  return result
 }
 
-// the jQuery ready function will add click listeners once the dom is loaded
-$(function () {
-  $('button').click(function () {
-    // if gameover then restart else log a player turn
-    if (isGameOver()) {
-      restart()
-    } else {
-      // can use jquery index() to find the position of this element in relation to its siblings. works as only answers are in this container
-      playTurn($(this).index())
-    }
-    updateDisplay()
+
+function gameEnd() {
+  winCondition = whoWon()
+  switch (winCondition) {
+    case 1:
+    $(".questionNo").text("the first of the players has won")
+    break
+    case 2:
+    $(".questionNo").text("the second of the players has won")
+    break
+    case 3:
+    $(".questionNo").text("nobody has won - nobody")
+    break
+  }
+  $(".playerNo").text("and surviving this quiz makes your mind")
+  $(".questionText").text("rot that little bit more")
+  $(".buttonBox").empty().append("<button>I crave another round</button>")
+  $(".buttonBox button").on("click",function() {
+    restart()
+    drawQuestion()
   })
-  // update the display for the first time
-  updateDisplay()
-})
+}
+
+function updateQuestionNo() {
+  $(".questionNo").text("Question" + questionNow)
+}
+
+function numberOfQuestions() {
+  return questionsArray.length
+}
+
+function currentQuestion() {
+  return questionNow
+}
+
+function correctAnswer() {
+  return questionsArray[questionNow].correctAnswer
+}
+
+function numberOfAnswers() {
+  return questionsArray[questionNow].answersArray.length
+}
+
+function isGameOver() {
+  return questionNow >= numberOfQuestions() ? true : false
+}
+
+function whoWon() {
+
+  if (questionNow < questionsArray.length) return 0
+  if (playerScore[0] === playerScore[1]) return 3
+  return playerScore[0] > playerScore[1] ? 1 : 2
+}
